@@ -3,11 +3,13 @@ import { useForm } from '@mantine/form'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { notifications } from '@mantine/notifications'
 import {
-  Container, Paper, Title, Text, TextInput, PasswordInput, Checkbox, Button, Group, Stack, Divider, Box, Center, Flex, rem, Alert,
+  Container, Paper, Title, Text, TextInput, PasswordInput, Checkbox, Button, Group, Stack, Divider, Box, Center, rem, Badge,
 } from '@mantine/core'
 import {
-  IconUser, IconLock, IconEye, IconEyeOff, IconHeart, IconMail, IconPhone, IconInfoCircle, IconShield, IconArrowRight, IconCheck, IconX, IconStethoscope,
+  IconUser, IconLock, IconArrowRight, IconCheck, IconX, IconStethoscope, IconUsers, IconUserCircle,
 } from '@tabler/icons-react'
+import { api } from '../services/api'
+import type { ProviderLoginRequest } from '../services/api'
 
 export const Route = createFileRoute('/login')({
   component: Login,
@@ -21,7 +23,6 @@ interface LoginForm {
 
 function Login() {
   const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
 
   // Check if user is already authenticated
@@ -64,34 +65,41 @@ function Login() {
     setLoading(true)
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // For demo purposes, accept any valid email/phone and password
-      if (values.emailOrPhone && values.password) {
-        // Store authentication tokens
-        localStorage.setItem('providerToken', 'demo-provider-token-' + Date.now())
+      const loginData: ProviderLoginRequest = {
+        email: values.emailOrPhone,
+        password: values.password,
+      }
+
+      const response = await api.provider.login(loginData)
+
+      if (response.success && response.data) {
+        // Store authentication tokens and user data
+        const { access_token, refresh_token, provider } = response.data
+        
+        localStorage.setItem('providerToken', access_token)
+        localStorage.setItem('providerRefreshToken', refresh_token)
         localStorage.setItem('providerUser', JSON.stringify({
-          email: values.emailOrPhone,
-          name: 'Dr. John Doe',
-          role: 'provider'
+          email: provider.email,
+          name: `${provider.first_name} ${provider.last_name}`,
+          role: 'provider',
+          ...provider
         }))
         
         notifications.show({
           title: 'Login Successful',
-          message: 'Welcome back! Redirecting to dashboard...',
+          message: `Welcome back, ${provider.first_name}! Redirecting to dashboard...`,
           color: 'green',
           icon: <IconCheck size={16} />,
         })
         
         navigate({ to: '/dashboard' })
       } else {
-        throw new Error('Invalid credentials')
+        throw new Error(response.error || 'Login failed')
       }
     } catch (error) {
       notifications.show({
         title: 'Login Failed',
-        message: 'Invalid email/phone or password. Please try again.',
+        message: error instanceof Error ? error.message : 'Invalid email or password. Please try again.',
         color: 'red',
         icon: <IconX size={16} />,
       })
@@ -112,8 +120,44 @@ function Login() {
     navigate({ to: '/register' })
   }
 
+  const handleSwitchToPatient = () => {
+    navigate({ to: '/patient-login' })
+  }
+
   return (
     <Container size="xs" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
+      {/* Portal Switcher */}
+      <Box
+        style={{
+          position: 'absolute',
+          top: '20px',
+          right: '20px',
+          zIndex: 1000,
+        }}
+      >
+        <Button
+          variant="light"
+          size="sm"
+          leftSection={<IconUsers size={16} />}
+          rightSection={<IconArrowRight size={14} />}
+          onClick={handleSwitchToPatient}
+          style={{
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            color: 'white',
+            borderRadius: '20px',
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+            border: 'none',
+            fontWeight: 500,
+            '&:hover': {
+              transform: 'translateY(-1px)',
+              boxShadow: '0 6px 16px rgba(16, 185, 129, 0.4)',
+            },
+          }}
+        >
+          Switch to Patient Portal
+        </Button>
+      </Box>
+
       <Paper
         shadow="md"
         p="xl"
@@ -147,6 +191,19 @@ function Login() {
             <Text c="dimmed" size="sm" ta="center">
               Access your healthcare application dashboard
             </Text>
+            <Badge 
+              color="blue" 
+              variant="light" 
+              size="sm"
+              style={{ 
+                marginTop: rem(8),
+                background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                border: '1px solid #bfdbfe',
+              }}
+            >
+              <IconUserCircle size={12} style={{ marginRight: '4px' }} />
+              Healthcare Professional Portal
+            </Badge>
           </Stack>
         </Center>
 
@@ -177,20 +234,6 @@ function Login() {
               label="Password"
               placeholder="Enter your password"
               leftSection={<IconLock size={16} />}
-              rightSection={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#6b7280',
-                  }}
-                >
-                  {showPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
-                </button>
-              }
               required
               {...form.getInputProps('password')}
               styles={{
