@@ -2,20 +2,12 @@ import { useState, useMemo, useEffect } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { notifications } from '@mantine/notifications'
 import {
-  Container, Title, Text, Button, Stack, Paper, Group, Box, Avatar, Badge, ActionIcon, Menu, TextInput, Pagination, Table, rem, Flex, Divider, Grid, Card, Modal, Select, Checkbox, Alert, Tabs, ScrollArea, RingProgress,
+  Container, Title, Text, Button, Stack, Paper, Group, Box, Avatar, Badge, ActionIcon, Menu, TextInput, Pagination, Table, Divider, Grid, Card, Modal, Select, Checkbox, Alert, Tabs,
 } from '@mantine/core'
 import {
-  IconLogout, IconHeart, IconUser, IconSearch, IconBell, IconMessageCircle, IconDotsVertical, IconPlus, IconEye, IconEdit, IconTrash, IconPhone, IconMail, IconCalendar, IconDashboard, IconUsers, IconFileText, IconSettings, IconClock, IconChevronLeft, IconChevronRight, IconCalendarTime, IconStethoscope, IconCheck, IconX, IconAlertTriangle, IconInfoCircle, IconDownload, IconUpload, IconRefresh, IconFilter, IconCalendarEvent, IconCalendarStats,
+  IconLogout, IconUser, IconSearch, IconBell, IconMessageCircle, IconDotsVertical, IconPlus, IconEye, IconEdit, IconTrash, IconPhone, IconMail, IconCalendar, IconUsers, IconFileText, IconSettings, IconChevronLeft, IconChevronRight, IconCalendarTime, IconCheck, IconAlertTriangle, IconInfoCircle, IconDownload, IconUpload, IconRefresh, IconCalendarEvent, IconCalendarStats,
 } from '@tabler/icons-react'
-import { api } from '../services/api'
-import type { 
-  ProviderAvailabilityCreate, 
-  ProviderAvailabilityUpdate, 
-  ProviderAvailabilityParams,
-  AvailabilityStatus,
-  AppointmentType,
-  LocationType
-} from '../services/api'
+import { availabilityApi, providerApi } from '../services/api'
 
 export const Route = createFileRoute('/dashboard')({
   component: Dashboard,
@@ -101,7 +93,7 @@ function Dashboard() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
   const [bulkEditMode, setBulkEditMode] = useState(false)
   const [selectedSlots, setSelectedSlots] = useState<string[]>([])
-  const [templates, setTemplates] = useState<AvailabilityTemplate[]>([])
+  // const [templates, setTemplates] = useState<AvailabilityTemplate[]>([])
   const [userName, setUserName] = useState('Dr. John Doe')
   const [userInitials, setUserInitials] = useState('JD')
   const navigate = useNavigate()
@@ -142,7 +134,7 @@ function Dashboard() {
       
       if (refreshToken) {
         // Call the logout API
-        await api.provider.logout(refreshToken)
+        await providerApi.logout(refreshToken)
       }
     } catch (error) {
       // Even if logout API fails, we should still clear local storage
@@ -240,7 +232,7 @@ function Dashboard() {
 
   const handleDeleteSlot = async (slotId: string) => {
     try {
-      const response = await api.provider.availability.delete(slotId)
+      const response = await availabilityApi.deleteSlot(slotId)
       if (response.success) {
         setTimeSlots(prev => prev.filter(slot => slot.id !== slotId))
         notifications.show({
@@ -319,7 +311,7 @@ function Dashboard() {
               end_date: endDate.toISOString().split('T')[0],
             }
 
-            const response = await api.provider.availability.get(providerId, params)
+            const response = await availabilityApi.getProviderAvailability(providerId, params)
             if (response.success && response.data) {
               // Transform API data to match our local format
               const apiSlots = response.data.map((slot: any) => ({
@@ -966,51 +958,41 @@ function Dashboard() {
                   endTime.setMinutes(endTime.getMinutes() + parseInt(durationInput?.value || '30'))
                   const endTimeStr = endTime.toTimeString().slice(0, 5)
 
-                  const availabilityData: ProviderAvailabilityCreate = {
-                    provider_id: providerId,
+                  const availabilityData = {
                     date: dateInput.value,
                     start_time: startTime,
                     end_time: endTimeStr,
-                    timezone: 'America/New_York',
+                    appointment_type: appointmentTypeInput?.value || 'General Consultation',
+                    notes: notesInput?.value || '',
                     is_recurring: false,
-                    slot_duration: parseInt(durationInput?.value || '30'),
-                    status: 'available',
-                    appointment_type: (appointmentTypeInput?.value as AppointmentType) || 'consultation',
-                    location: {
-                      type: 'clinic' as LocationType,
-                    },
-                    notes: notesInput?.value || null,
                   }
 
-                  const response = await api.provider.availability.create(availabilityData)
+                  const response = await availabilityApi.createSlots(availabilityData)
                   
-                  if (response.success) {
-                    setAddModalOpen(false)
-                    notifications.show({
-                      title: 'Availability Added',
-                      message: 'New availability slots have been added successfully.',
-                      color: 'green',
-                    })
-                    
-                    // Refresh the availability data
-                    const currentSlots = [...timeSlots]
-                    const newSlot = {
-                      id: response.data?.id || `slot-${Date.now()}`,
-                      date: dateInput.value,
-                      time: startTime,
-                      status: 'available' as AvailabilityStatus,
-                      duration: parseInt(durationInput?.value || '30'),
-                      appointmentType: appointmentTypeInput?.value,
-                      notes: notesInput?.value,
-                    }
-                    setTimeSlots([...currentSlots, newSlot])
-                  } else {
-                    throw new Error(response.error || 'Failed to add availability')
+                  setAddModalOpen(false)
+                  notifications.show({
+                    title: 'Availability Added',
+                    message: 'New availability slots have been added successfully.',
+                    color: 'green',
+                  })
+                  
+                  // Refresh the availability data
+                  const currentSlots = [...timeSlots]
+                  const newSlot: TimeSlot = {
+                    id: response[0]?.id || `slot-${Date.now()}`,
+                    date: dateInput.value,
+                    time: startTime,
+                    status: 'available',
+                    duration: parseInt(durationInput?.value || '30'),
+                    appointmentType: appointmentTypeInput?.value,
+                    notes: notesInput?.value,
                   }
+                  setTimeSlots([...currentSlots, newSlot])
                 } catch (error) {
+                  console.error('Add availability error:', error)
                   notifications.show({
                     title: 'Add Failed',
-                    message: error instanceof Error ? error.message : 'Failed to add availability slot.',
+                    message: 'Failed to add availability slot. Please check your input and try again.',
                     color: 'red',
                   })
                 }
@@ -1114,7 +1096,7 @@ function Dashboard() {
                       notes: notesInput?.value || null,
                     }
 
-                    const response = await api.provider.availability.update(selectedSlot.id, updateData)
+                    const response = await availabilityApi.updateSlot(selectedSlot.id, updateData)
                     
                     if (response.success) {
                       // Update local state

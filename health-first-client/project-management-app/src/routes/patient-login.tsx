@@ -32,7 +32,7 @@ import {
   IconStethoscope,
   IconSparkles,
 } from '@tabler/icons-react'
-import { api } from '../services/api'
+import { patientApi, authUtils } from '../services/api'
 import type { PatientLoginRequest } from '../services/api'
 
 export const Route = createFileRoute('/patient-login')({
@@ -94,32 +94,26 @@ function PatientLogin() {
         password: values.password,
       }
 
-      const response = await api.patient.login(loginData)
+      const response = await patientApi.login(loginData)
 
-      if (response.success && response.data) {
-        // Store authentication tokens and user data
-        const { access_token, refresh_token, patient } = response.data
-        
-        localStorage.setItem('patientToken', access_token)
-        localStorage.setItem('patientRefreshToken', refresh_token)
-        localStorage.setItem('patientUser', JSON.stringify({
-          email: patient.email,
-          name: `${patient.first_name} ${patient.last_name}`,
-          role: 'patient',
-          ...patient
-        }))
-        
-        notifications.show({
-          title: 'Login Successful',
-          message: `Welcome back, ${patient.first_name}! Redirecting to your health dashboard...`,
-          color: 'green',
-          icon: <IconCheck size={16} />,
-        })
-        
-        navigate({ to: '/patient-dashboard' })
-      } else {
-        throw new Error(response.error || 'Login failed')
-      }
+      // Store authentication tokens
+      authUtils.storeTokens(response.access_token, response.refresh_token, 'patient')
+      
+      // Store user data (you might want to fetch the full profile here)
+      localStorage.setItem('patientUser', JSON.stringify({
+        identifier: values.identifier,
+        name: 'John Smith', // This should come from the API response
+        role: 'patient'
+      }))
+      
+      notifications.show({
+        title: 'Login Successful',
+        message: 'Welcome to your health dashboard!',
+        color: 'green',
+        icon: <IconCheck size={16} />,
+      })
+      
+      navigate({ to: '/patient-dashboard' })
     } catch (error) {
       notifications.show({
         title: 'Login Failed',

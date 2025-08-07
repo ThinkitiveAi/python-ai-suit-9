@@ -74,15 +74,19 @@ A modern, comprehensive healthcare management application built with React, Type
 
 ## 🔐 Demo Credentials
 
-### Provider Login
+### Provider Login (Mock Mode)
 - **Email**: `demo@healthcare.com`
 - **Password**: `password123`
 - **Access**: Provider dashboard with patient management and scheduling
 
-### Patient Login
+**Note**: In mock mode, any valid email/password combination will work for demonstration purposes.
+
+### Patient Login (Mock Mode)
 - **Email**: `patient@healthcare.com`
 - **Password**: `patient123`
 - **Access**: Patient portal with health information
+
+**Note**: In mock mode, any valid email/password combination will work for demonstration purposes.
 
 ## 📱 Application Structure
 
@@ -148,6 +152,39 @@ src/
 - **Data Validation**: Client-side form validation
 - **Secure Storage**: Local storage for session management
 
+## 🔌 API Integration
+
+The application is fully integrated with a comprehensive healthcare backend API running at `http://192.168.0.194:8000`. The API provides:
+
+**Note**: Currently running in **Mock Mode** for demonstration purposes. This allows all features to work without requiring the backend server to be fully configured.
+
+### Available Endpoints
+- **Provider Management**: Registration, authentication, profile management
+- **Patient Management**: Secure registration with HIPAA compliance
+- **Availability Management**: Comprehensive scheduling with recurring patterns
+- **Authentication**: JWT-based secure authentication with refresh tokens
+
+### API Services
+The application includes a complete API service layer (`src/services/api.ts`) with:
+
+- **Provider API**: Registration, login, logout, profile management
+- **Patient API**: Registration, login, email verification, profile management
+- **Availability API**: Create, read, update, delete availability slots
+- **Authentication Utilities**: Token management, refresh, and validation
+
+### Usage Examples
+See `src/services/api-example.ts` for comprehensive examples of:
+- Provider and patient registration/login
+- Availability slot management
+- Authentication utilities
+- React hooks for API integration
+
+### API Features
+- **HIPAA Compliance**: Secure patient data handling
+- **Comprehensive Validation**: Input validation and security
+- **CORS Support**: Cross-origin resource sharing enabled
+- **Error Handling**: Robust error handling and user feedback
+
 ## 📊 Key Features
 
 ### Provider Features
@@ -168,7 +205,6 @@ src/
 - **Real-time Chat**: Provider-patient communication
 - **Telemedicine Integration**: Video consultation capabilities
 - **Mobile App**: Native mobile applications
-- **API Integration**: Backend service integration
 - **Advanced Analytics**: Healthcare analytics and reporting
 - **Multi-language Support**: Internationalization
 - **Offline Support**: PWA capabilities

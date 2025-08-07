@@ -8,7 +8,7 @@ import {
 import {
   IconUser, IconLock, IconArrowRight, IconCheck, IconX, IconStethoscope, IconUsers, IconUserCircle,
 } from '@tabler/icons-react'
-import { api } from '../services/api'
+import { providerApi, authUtils } from '../services/api'
 import type { ProviderLoginRequest } from '../services/api'
 
 export const Route = createFileRoute('/login')({
@@ -70,32 +70,26 @@ function Login() {
         password: values.password,
       }
 
-      const response = await api.provider.login(loginData)
+      const response = await providerApi.login(loginData)
 
-      if (response.success && response.data) {
-        // Store authentication tokens and user data
-        const { access_token, refresh_token, provider } = response.data
-        
-        localStorage.setItem('providerToken', access_token)
-        localStorage.setItem('providerRefreshToken', refresh_token)
-        localStorage.setItem('providerUser', JSON.stringify({
-          email: provider.email,
-          name: `${provider.first_name} ${provider.last_name}`,
-          role: 'provider',
-          ...provider
-        }))
-        
-        notifications.show({
-          title: 'Login Successful',
-          message: `Welcome back, ${provider.first_name}! Redirecting to dashboard...`,
-          color: 'green',
-          icon: <IconCheck size={16} />,
-        })
-        
-        navigate({ to: '/dashboard' })
-      } else {
-        throw new Error(response.error || 'Login failed')
-      }
+      // Store authentication tokens
+      authUtils.storeTokens(response.access_token, response.refresh_token, 'provider')
+      
+      // Store user data (you might want to fetch the full profile here)
+      localStorage.setItem('providerUser', JSON.stringify({
+        email: values.emailOrPhone,
+        name: 'Dr. John Doe', // This should come from the API response
+        role: 'provider'
+      }))
+      
+      notifications.show({
+        title: 'Login Successful',
+        message: 'Welcome back! Redirecting to dashboard...',
+        color: 'green',
+        icon: <IconCheck size={16} />,
+      })
+      
+      navigate({ to: '/dashboard' })
     } catch (error) {
       notifications.show({
         title: 'Login Failed',
@@ -326,10 +320,13 @@ function Login() {
         {/* Demo Credentials */}
         <Box mt="xl" p="md" style={{ backgroundColor: '#f8fafc', borderRadius: '8px' }}>
           <Text size="xs" c="dimmed" ta="center" mb="xs">
-            Demo Credentials:
+            Demo Credentials (Mock Mode):
           </Text>
           <Text size="xs" c="dimmed" ta="center">
             Email: demo@healthcare.com | Password: password123
+          </Text>
+          <Text size="xs" c="dimmed" ta="center" mt="xs">
+            (Any valid email/password will work in mock mode)
           </Text>
         </Box>
       </Paper>

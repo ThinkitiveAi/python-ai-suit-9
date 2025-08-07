@@ -40,8 +40,8 @@ import {
   IconCheck,
   IconX,
 } from "@tabler/icons-react";
-import { api } from "../services/api";
-import type { PatientCreateRequest } from "../services/api";
+import { patientApi, authUtils } from "../services/api";
+import type { PatientCreate } from "../services/api";
 
 export const Route = createFileRoute("/patient-register")({
   component: PatientRegister,
@@ -250,7 +250,7 @@ function PatientRegister() {
 
     try {
       // Prepare the data according to API schema
-      const registrationData: PatientCreateRequest = {
+      const registrationData: PatientCreate = {
         first_name: values.firstName,
         last_name: values.lastName,
         email: values.email,
@@ -280,7 +280,7 @@ function PatientRegister() {
         confirm_password: values.confirmPassword,
       };
 
-      const response = await api.patient.register(registrationData);
+      const response = await patientApi.register(registrationData);
 
       if (response.success) {
         notifications.show({
@@ -296,7 +296,7 @@ function PatientRegister() {
           navigate({ to: "/patient-login" });
         }, 2000);
       } else {
-        throw new Error(response.error || "Registration failed");
+        throw new Error("Registration failed");
       }
     } catch (error) {
       notifications.show({

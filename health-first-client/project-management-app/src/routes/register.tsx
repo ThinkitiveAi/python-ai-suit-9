@@ -41,8 +41,8 @@ import {
   IconCheck,
   IconX,
 } from "@tabler/icons-react";
-import { api } from "../services/api";
-import type { ProviderCreateRequest } from "../services/api";
+import { providerApi, authUtils } from "../services/api";
+import type { ProviderCreate } from "../services/api";
 
 export const Route = createFileRoute("/register")({
   component: Register,
@@ -268,7 +268,7 @@ function Register() {
 
     try {
       // Prepare the data according to API schema
-      const registrationData: ProviderCreateRequest = {
+      const registrationData: ProviderCreate = {
         first_name: values.firstName,
         last_name: values.lastName,
         email: values.email,
@@ -287,7 +287,7 @@ function Register() {
         confirm_password: values.confirmPassword,
       };
 
-      const response = await api.provider.register(registrationData);
+      const response = await providerApi.register(registrationData);
 
       if (response.success) {
         notifications.show({
@@ -303,7 +303,7 @@ function Register() {
           navigate({ to: "/login" });
         }, 2000);
       } else {
-        throw new Error(response.error || "Registration failed");
+        throw new Error("Registration failed");
       }
     } catch (error) {
       notifications.show({

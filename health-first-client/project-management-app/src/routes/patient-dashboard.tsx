@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Container, Title, Text, Button, Stack, Paper, Group, Box } from '@mantine/core'
 import { IconLogout, IconHeart } from '@tabler/icons-react'
-import { api } from '../services/api'
+import { patientApi, authUtils } from '../services/api'
 
 export const Route = createFileRoute('/patient-dashboard')({
   component: PatientDashboard,
@@ -31,7 +31,7 @@ function PatientDashboard() {
   const handleLogout = async () => {
     try {
       // Call the logout API
-      await api.patient.logout()
+              await patientApi.logout()
     } catch (error) {
       // Even if logout API fails, we should still clear local storage
       console.error('Logout API error:', error)
