@@ -30,6 +30,10 @@ A modern, comprehensive healthcare management application built with React, Type
 
 ![Patient Dashboard](https://raw.githubusercontent.com/ThinkitiveAi/python-ai-suit-9/refs/heads/dev/health-first-client/project-management-app/patient_img.png)
 
+
+![Patient Dashboard](https://raw.githubusercontent.com/ThinkitiveAi/python-ai-suit-9/refs/heads/dev/health-first-client/project-management-app/img.png)
+
+
 *The provider dashboard showing key metrics, patient management, and appointment scheduling features.*
 
 ## 🛠️ Technology Stack
